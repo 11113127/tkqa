@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外燴需求問卷</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .form-container {
+            padding: 30px 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4ECDC4;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-item:hover {
+            border-color: #4ECDC4;
+            background: rgba(78, 205, 196, 0.05);
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto;
+        }
+        
+        .checkbox-item.checked {
+            border-color: #4ECDC4;
+            background: rgba(78, 205, 196, 0.1);
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        .user-info {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4ECDC4;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #FF6B6B;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ 外燴需求問卷</h1>
+            <p>請填寫您的外燴需求，我們將為您量身打造最佳方案</p>
+        </div>
+        
+        <div id="loading" class="loading">
+            <p>正在載入...</p>
+        </div>
+        
+        <div id="error" class="error" style="display: none;">
+            <p>載入失敗，請稍後再試</p>
+        </div>
+        
+        <div id="app" style="display: none;">
+            <div class="form-container">
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <strong>歡迎您：</strong><span id="userName"></span>
+                </div>
+                
+                <form id="surveyForm">
+                    <div class="form-group">
+                        <label for="eventDate">活動日期 *</label>
+                        <input type="date" id="eventDate" name="eventDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guestCount">預計人數 *</label>
+                        <select id="guestCount" name="guestCount" required>
+                            <option value="">請選擇人數範圍</option>
+                            <option value="10-30">10-30人</option>
+                            <option value="31-50">31-50人</option>
+                            <option value="51-100">51-100人</option>
+                            <option value="101-200">101-200人</option>
+                            <option value="200+">200人以上</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="budget">預算範圍 *</label>
+                        <select id="budget" name="budget" required>
+                            <option value="">請選擇預算範圍</option>
+                            <option value="5000-10000">$5,000-10,000</option>
+                            <option value="10000-20000">$10,000-20,000</option>
+                            <option value="20000-50000">$20,000-50,000</option>
+                            <option value="50000-100000">$50,000-100,000</option>
+                            <option value="100000+">$100,000以上</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>餐點偏好 *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="chinese" name="cuisine" value="中式">
+                                <label for="chinese">中式</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="western" name="cuisine" value="西式">
+                                <label for="western">西式</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="japanese" name="cuisine" value="日式">
+                                <label for="japanese">日式</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="fusion" name="cuisine" value="創意料理">
+                                <label for="fusion">創意料理</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="venue">場地資訊</label>
+                        <textarea id="venue" name="venue" rows="3" placeholder="請描述活動場地（室內/外、地址、廚房設備等）"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>飲食限制 *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="vegetarian" name="dietaryRestrictions" value="素食">
+                                <label for="vegetarian">素食</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="vegan" name="dietaryRestrictions" value="純素">
+                                <label for="vegan">純素</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="halal" name="dietaryRestrictions" value="清真">
+                                <label for="halal">清真</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="kosher" name="dietaryRestrictions" value="猶太教規">
+                                <label for="kosher">猶太教規</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="noRestriction" name="dietaryRestrictions" value="無限制">
+                                <label for="noRestriction">無限制</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>常見過敏原 *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="nuts" name="allergens" value="堅果類">
+                                <label for="nuts">堅果類</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="seafood" name="allergens" value="海鮮類">
+                                <label for="seafood">海鮮類</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="dairy" name="allergens" value="乳製品">
+                                <label for="dairy">乳製品</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="eggs" name="allergens" value="蛋類">
+                                <label for="eggs">蛋類</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="gluten" name="allergens" value="麩質">
+                                <label for="gluten">麩質</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="soy" name="allergens" value="大豆">
+                                <label for="soy">大豆</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="noAllergens" name="allergens" value="無過敏">
+                                <label for="noAllergens">無過敏</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="spiceLevel">辣度要求 *</label>
+                        <select id="spiceLevel" name="spiceLevel" required>
+                            <option value="">請選擇辣度偏好</option>
+                            <option value="不辣">不辣</option>
+                            <option value="微辣">微辣</option>
+                            <option value="小辣">小辣</option>
+                            <option value="中辣">中辣</option>
+                            <option value="大辣">大辣</option>
+                            <option value="特辣">特辣</option>
+                            <option value="依個人喜好調整">依個人喜好調整</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>環境限制 *</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="indoor" name="venueType" value="僅室內">
+                                <label for="indoor">僅室內</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="outdoor" name="venueType" value="僅戶外">
+                                <label for="outdoor">僅戶外</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="both" name="venueType" value="室內外皆可">
+                                <label for="both">室內外皆可</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="kitchen" name="venueType" value="有廚房設備">
+                                <label for="kitchen">有廚房設備</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="noKitchen" name="venueType" value="無廚房設備">
+                                <label for="noKitchen">無廚房設備</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="powerSupply" name="venueType" value="電源供應充足">
+                                <label for="powerSupply">電源充足</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="parking" name="venueType" value="停車方便">
+                                <label for="parking">停車方便</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specialRequests">其他特殊需求</label>
+                        <textarea id="specialRequests" name="specialRequests" rows="3" placeholder="主題要求、特殊設備、服務人員服裝、時間限制等"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">提交需求</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LIFF 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 請將 YOUR_LIFF_ID 替換為您的實際 LIFF ID
+            const LIFF_ID = '2007887295-NOBRjRXR'; 
+            
+            liff.init({ liffId: LIFF_ID })
+                .then(() => {
+                    console.log('LIFF 初始化成功');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    
+                    // 如果用戶已登入，取得用戶資訊
+                    if (liff.isLoggedIn()) {
+                        liff.getProfile()
+                            .then(profile => {
+                                console.log('用戶資訊:', profile);
+                                document.getElementById('userInfo').style.display = 'block';
+                                document.getElementById('userName').textContent = profile.displayName;
+                            })
+                            .catch(err => {
+                                console.log('無法取得用戶資訊:', err);
+                            });
+                    }
+                })
+                .catch(err => {
+                    console.error('LIFF 初始化失敗:', err);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').style.display = 'block';
+                });
+        });
+
+        // 處理 checkbox 樣式
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                const item = e.target.closest('.checkbox-item');
+                if (e.target.checked) {
+                    item.classList.add('checked');
+                } else {
+                    item.classList.remove('checked');
+                }
+            }
+        });
+
+        // 處理表單提交
+        document.getElementById('surveyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 收集表單資料
+            const formData = new FormData(this);
+            const data = {};
+            
+            // 處理一般欄位和多選欄位
+            for (let [key, value] of formData.entries()) {
+                if (['cuisine', 'dietaryRestrictions', 'allergens', 'venueType'].includes(key)) {
+                    if (!data[key]) data[key] = [];
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            // 驗證必填欄位
+            const requiredFields = ['eventDate', 'guestCount', 'budget', 'spiceLevel'];
+            const requiredArrays = ['cuisine', 'dietaryRestrictions', 'allergens', 'venueType'];
+            
+            for (let field of requiredFields) {
+                if (!data[field]) {
+                    alert('請填寫所有必填欄位');
+                    return;
+                }
+            }
+            
+            for (let field of requiredArrays) {
+                if (!data[field] || data[field].length === 0) {
+                    alert('請填寫所有必填欄位');
+                    return;
+                }
+            }
+            
+            console.log('問卷資料:', data);
+            
+            // 模擬 AI 判斷邏輯
+            const result = analyzeRequirement(data);
+            
+            // 發送訊息回 LINE
+            const message = `✅ 問卷填寫完成！\n\n📊 AI分析結果：\n${result.recommendation}\n\n💰 預估費用：${result.estimatedCost}\n⏰ 建議時程：${result.timeline}`;
+            
+            if (liff.isInClient()) {
+                liff.sendMessages([{
+                    type: 'text',
+                    text: message
+                }]).then(() => {
+                    alert('資料已送出！請回到對話查看結果');
+                    liff.closeWindow();
+                }).catch(err => {
+                    console.error('發送訊息失敗:', err);
+                    alert('發送失敗，請稍後再試');
+                });
+            } else {
+                alert('Demo 模式：\n' + message);
+            }
+        });
+
+        // 改進的 AI 判斷邏輯
+        function analyzeRequirement(data) {
+            const guestCount = parseInt(data.guestCount.split('-')[0]);
+            const budgetMax = parseInt(data.budget.split('-')[1]?.replace(/[^0-9]/g, '') || '999999');
+            const budgetPerPerson = budgetMax / guestCount;
+            
+            let recommendation = '';
+            let estimatedCost = '';
+            let timeline = '';
+            let specialNotes = [];
+            
+            // 檢查特殊需求
+            if (data.dietaryRestrictions && data.dietaryRestrictions.includes('素食')) {
+                specialNotes.push('🥬 提供素食選項');
+            }
+            if (data.allergens && !data.allergens.includes('無過敏')) {
+                specialNotes.push('⚠️ 注意過敏原：' + data.allergens.join('、'));
+            }
+            if (data.spiceLevel && data.spiceLevel !== '不辣') {
+                specialNotes.push('🌶️ 辣度：' + data.spiceLevel);
+            }
+            if (data.venueType && data.venueType.includes('無廚房設備')) {
+                specialNotes.push('🚚 需要行動廚房設備');
+            }
+            
+            // 基於預算判斷方案
+            if (budgetPerPerson >= 800) {
+                recommendation = '🌟 方案二：AI客製化菜單\n推薦精緻套餐，可根據您的偏好客製化菜色';
+                estimatedCost = `${Math.round(budgetMax * 0.9).toLocaleString()}`;
+                timeline = '7-10個工作天';
+            } else if (budgetPerPerson >= 300) {
+                recommendation = '📋 方案一：固定套餐\n推薦經濟實惠套餐，CP值最高的選擇';
+                estimatedCost = `${Math.round(budgetMax * 0.8).toLocaleString()}`;
+                timeline = '3-5個工作天';
+            } else {
+                recommendation = '👨‍💼 方案三：專員協助\n預算較為有限，建議與專員討論調整方案';
+                estimatedCost = '需進一步評估';
+                timeline = '需專員聯繫';
+            }
+            
+            // 加入特殊備註
+            if (specialNotes.length > 0) {
+                recommendation += '\n\n📝 特別注意：\n' + specialNotes.join('\n');
+            }
+            
+            return {
+                recommendation,
+                estimatedCost,
+                timeline
+            };
+        }
+    </script>
+</body>
+</html>
